@@ -35,7 +35,8 @@ site_list = ['reddit.com', 'forums.somethingawful.com', 'somethingawful.com',
             'stumbleupon.com', 'yelp.com', 'slashdot.org']
 
 def sites_from_ini(ini_file):
-    # this enables the ini file to be written like
+    # This allows you to specify sites in a file using the following format.
+    # site_list is defined above so this will not be used by default.
     # sites = google.com, facebook.com, quora.com ....
     if os.path.exists(ini_file):
         ini_file_handle = open(ini_file)
@@ -44,9 +45,12 @@ def sites_from_ini(ini_file):
             if key == "sites":
                 for item in [each.strip() for each in value.split(",")]:
                     site_list.append(item)
-
+                    
 def rehash():
-    subprocess.check_call(restart_network_command)
+    if "cygwin" in sys.platform:
+        print ('Network restart not required.')
+    else:
+        subprocess.check_call(restart_network_command)
 
 def work():
     hFile = open(hosts_file, 'a+')
@@ -63,8 +67,9 @@ def work():
         print("127.0.0.1\twww." + site, file=hFile)
 
     print(end_token, file=hFile)
-
+    
     rehash()
+
 
 def play():
     hosts_file_handle = open(hosts_file, "r+")
@@ -82,12 +87,11 @@ def play():
         hosts_file_handle.seek(0)
         hosts_file_handle.write(''.join(lines))
         hosts_file_handle.truncate()
+    
+    rehash()
 
-        rehash()
 
 def main():
-    if getpass.getuser() != 'root':
-        exit_error('Please run script as root.')
     if len(sys.argv) != 2:
         exit_error('usage: ' + sys.argv[0] + ' [work|play]')
     {"work": work, "play": play}[sys.argv[1]]()
